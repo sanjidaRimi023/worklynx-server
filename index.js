@@ -20,7 +20,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const taskCollection = client.db("workLynxDB").collection("tasks");
 
@@ -61,21 +61,6 @@ async function run() {
         res.status(500).send({ error: "Server Error" });
       }
     });
-
-    //   app.get("/tasks/my-posted-tasks", async (req, res) => {
-    //  try {
-    //    const {email} = req.query;
-    //      console.log("Email received in backend:", email);
-
-    //     if (!email) return res.status(400).json({ error: "Email is required" });
-
-    //     const tasks = await taskCollection.find({ userEmail : email }).toArray();
-    //     res.send(tasks);
-    //   } catch (err) {
-    //     res.status(500).json({ error: "Failed to get tasks" });
-    //   }
-    // });
-
     app.get("/tasks/my-posted-tasks/:email", async (req, res) => {
       const email = req.params.email;
       const query = { userEmail: email };
@@ -161,10 +146,10 @@ async function run() {
       res.send({ message: "Task deleted" });
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } catch (error) {
     // await client.close()
     console.error("Failed to fetch tasks:", error);

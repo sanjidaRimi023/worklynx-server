@@ -83,6 +83,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/tasks/:email", async (req, res) => {
+      const userEmail = req.params.email;
+
+      const result = await taskCollection.aggregate([
+        { $match: { postedBy: userEmail } },
+        { $group: { _id: null, totalBids: { $sum: {$ifNull: ["$bidsCount", 0]} } } },
+      ]).toArray();
+      const totalBids = result[0]?.totalBids || 0;
+      res.send({ totalBids })
+    });
+
     app.post("/tasks", async (req, res) => {
       try {
         const newTask = req.body;

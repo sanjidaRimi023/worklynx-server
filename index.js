@@ -47,8 +47,39 @@ async function run() {
 
     app.get("/tasks/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await taskCollection.findOne(query);
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid Task ID" });
+      }
+
+      try {
+        const query = { _id: new ObjectId(id) };
+
+        const result = await taskCollection.findOne(query);
+        res.send(result);
+      } catch (err) {
+        res.status(500).send({ error: "Server Error" });
+      }
+    });
+
+    //   app.get("/tasks/my-posted-tasks", async (req, res) => {
+    //  try {
+    //    const {email} = req.query;
+    //      console.log("Email received in backend:", email);
+
+    //     if (!email) return res.status(400).json({ error: "Email is required" });
+
+    //     const tasks = await taskCollection.find({ userEmail : email }).toArray();
+    //     res.send(tasks);
+    //   } catch (err) {
+    //     res.status(500).json({ error: "Failed to get tasks" });
+    //   }
+    // });
+
+    app.get("/tasks/my-posted-tasks/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email };
+      const result = await taskCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -60,6 +91,35 @@ async function run() {
       } catch (error) {
         console.error("MongoDB connection failed:", error);
       }
+    });
+
+    app.patch("/bids/:id", async (req, res) => {
+      const { id } = req.params;
+      const bidsCount = req.body;
+
+      const result = await taskCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $inc: { bidsCount: 1 },
+        }
+      );
+
+      res.send(result);
+    });
+
+    app.delete("/tasks/:id", async (req, res) => {
+      const id = req.params.id;
+
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid task ID" });
+      }
+
+      const result = await taskCollection.deleteOne({ _id: new ObjectId(id) });
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.send({ message: "Task deleted" });
     });
 
     await client.db("admin").command({ ping: 1 });

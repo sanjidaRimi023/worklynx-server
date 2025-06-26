@@ -86,12 +86,19 @@ async function run() {
     app.get("/tasks/:email", async (req, res) => {
       const userEmail = req.params.email;
 
-      const result = await taskCollection.aggregate([
-        { $match: { postedBy: userEmail } },
-        { $group: { _id: null, totalBids: { $sum: {$ifNull: ["$bidsCount", 0]} } } },
-      ]).toArray();
+      const result = await taskCollection
+        .aggregate([
+          { $match: { postedBy: userEmail } },
+          {
+            $group: {
+              _id: null,
+              totalBids: { $sum: { $ifNull: ["$bidsCount", 0] } },
+            },
+          },
+        ])
+        .toArray();
       const totalBids = result[0]?.totalBids || 0;
-      res.send({ totalBids })
+      res.send({ totalBids });
     });
 
     app.post("/tasks", async (req, res) => {
@@ -116,6 +123,27 @@ async function run() {
       );
 
       res.send(result);
+    });
+
+    app.put("/tasks/:id", async (req, res) => {
+      const taskId = req.params.id;
+      const updatedTask = req.body;
+
+      try {
+        const result = await taskCollection.updateOne(
+          { _id: new ObjectId(taskId) },
+          { $set: updatedTask }
+        );
+
+        if (result.modifiedCount > 0) {
+          res.status(200).json({ message: "Task updated successfully" });
+        } else {
+          res.status(400).json({ message: "No changes were made" });
+        }
+      } catch (error) {
+        console.error("Update Error:", error);
+        res.status(500).json({ error: "Failed to update task" });
+      }
     });
 
     app.delete("/tasks/:id", async (req, res) => {
